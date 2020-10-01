@@ -3,16 +3,13 @@ namespace SpriteKind {
     export const Blocks = SpriteKind.create()
 }
 sprites.onCreated(SpriteKind.Blocks, function (sprite) {
-    lstAllBlocks.push(sprite)
+	
 })
 function decreaseBlockLife (blk: Sprite) {
-    locIndex = lstAllBlocks.indexOf(blk)
-    lstABlockLifes[locIndex] = lstABlockLifes[locIndex] - 1
-    return lstABlockLifes[locIndex]
+    sprites.changeDataNumberBy(blk, "life", -1)
+    return sprites.readDataNumber(blk, "life")
 }
 function initBlocks () {
-    lstAllBlocks = []
-    lstABlockLifes = []
     rowOfBlock(img`
         2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
         2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
@@ -68,13 +65,13 @@ function rowOfBlock (blkImage: Image, yOffset: number, bLife: number) {
     for (let index = 0; index <= lstBlockPosX.length - 1; index++) {
         block = sprites.create(blkImage, SpriteKind.Blocks)
         block.setPosition(40 + lstBlockPosX[index] * 20, 20 + (lstBlockPosY[index] + yOffset) * 10)
-        lstABlockLifes.push(bLife)
+        sprites.setDataNumber(block, "life", bLife)
     }
     numberOfBlocks += lstBlockPosX.length
 }
 sprites.onDestroyed(SpriteKind.Blocks, function (sprite) {
     numberOfBlocks += -1
-    if (numberOfBlocks == 0) {
+    if (numberOfBlocks <= 0) {
         game.over(true)
     }
 })
@@ -175,9 +172,6 @@ let lstBlockPosY: number[] = []
 let lstBlockPosX: number[] = []
 let Ball: Sprite = null
 let isBallOnPad = false
-let lstABlockLifes: number[] = []
-let locIndex = 0
-let lstAllBlocks: Sprite[] = []
 info.setLife(3)
 initBoard()
 initBlocks()
