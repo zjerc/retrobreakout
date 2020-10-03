@@ -2,30 +2,44 @@ namespace SpriteKind {
     export const Balls = SpriteKind.create()
     export const Blocks = SpriteKind.create()
 }
-sprites.onCreated(SpriteKind.Blocks, function (sprite) {
-	
-})
 function decreaseBlockLife (blk: Sprite) {
     sprites.changeDataNumberBy(blk, "life", -1)
     return sprites.readDataNumber(blk, "life")
 }
 function initBlocks () {
-    rowOfBlock(img`
+    numberOfBlocks = 0
+    createBlockRow(img`
         2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
         2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
         2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
         2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
         2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
         2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-        `, 0, 2)
-    rowOfBlock(img`
+        `, 40, 20, 5, 5, 2)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 40, 30, 5, 5, 2)
+    createBlockRow(img`
         7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
         7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
         7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
         7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
         7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
         7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        `, 2, 1)
+        `, 40, 40, 5, 5, 1)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 40, 50, 5, 5, 1)
 }
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     if (isBallOnPad) {
@@ -37,38 +51,6 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
         }
     }
 })
-function rowOfBlock (blkImage: Image, yOffset: number, bLife: number) {
-    lstBlockPosX = [
-    0,
-    1,
-    2,
-    3,
-    4,
-    0,
-    1,
-    2,
-    3,
-    4
-    ]
-    lstBlockPosY = [
-    0,
-    0,
-    0,
-    0,
-    0,
-    1,
-    1,
-    1,
-    1,
-    1
-    ]
-    for (let index = 0; index <= lstBlockPosX.length - 1; index++) {
-        block = sprites.create(blkImage, SpriteKind.Blocks)
-        block.setPosition(40 + lstBlockPosX[index] * 20, 20 + (lstBlockPosY[index] + yOffset) * 10)
-        sprites.setDataNumber(block, "life", bLife)
-    }
-    numberOfBlocks += lstBlockPosX.length
-}
 sprites.onDestroyed(SpriteKind.Blocks, function (sprite) {
     numberOfBlocks += -1
     if (numberOfBlocks <= 0) {
@@ -92,16 +74,24 @@ info.onCountdownEnd(function () {
 })
 sprites.onOverlap(SpriteKind.Balls, SpriteKind.Blocks, function (sprite, otherSprite) {
     locRemainLife = decreaseBlockLife(otherSprite)
-    if (locRemainLife == 0) {
+    bounceTheBall(sprite, otherSprite)
+    if (locRemainLife <= 0) {
         otherSprite.destroy()
     }
-    bounceTheBall(sprite, otherSprite)
     if (locRemainLife >= 1) {
         music.playTone(262, music.beat(BeatFraction.Half))
     } else {
         music.playTone(440, music.beat(BeatFraction.Half))
     }
 })
+function createBlockRow (blkImage: Image, startX: number, startY: number, num: number, spacing: number, bLife: number) {
+    for (let index = 0; index <= num - 1; index++) {
+        block = sprites.create(blkImage, SpriteKind.Blocks)
+        block.setPosition(startX + index * (block.width + spacing), startY)
+        sprites.setDataNumber(block, "life", bLife)
+    }
+    numberOfBlocks += num
+}
 function checkBallReachBottom () {
     if (Ball.y > 115 && !(inDeadTime)) {
         inDeadTime = true
@@ -114,25 +104,18 @@ function checkBallReachBottom () {
 function bounceTheBall (ball: Sprite, obj: Sprite) {
     if (ball.top < obj.top && ball.right > obj.left) {
         ball.vy = 0 - Math.abs(ball.vy)
+    } else if (ball.bottom > obj.bottom && ball.left < obj.right) {
+        ball.vy = Math.abs(ball.vy)
+    } else if (ball.left < obj.left && ball.bottom > obj.top) {
+        ball.vx = 0 - Math.abs(ball.vx)
+    } else if (ball.right > obj.right && ball.top < obj.bottom) {
+        ball.vx = Math.abs(ball.vx)
     } else {
-        if (ball.bottom > obj.bottom && ball.left < obj.right) {
-            ball.vy = Math.abs(ball.vy)
-        } else {
-            if (ball.left < obj.left && ball.bottom > obj.top) {
-                ball.vx = 0 - Math.abs(ball.vx)
-            } else {
-                if (ball.right > obj.right && ball.top < obj.bottom) {
-                    ball.vx = Math.abs(ball.vx)
-                } else {
-                    game.splash("error 1")
-                }
-            }
-        }
+        game.splash("error 1")
     }
 }
 function initBoard () {
     initPaddle()
-    numberOfBlocks = 0
     Ball = sprites.create(img`
         . . 1 1 . . 
         . 1 1 1 1 . 
@@ -164,14 +147,12 @@ sprites.onOverlap(SpriteKind.Balls, SpriteKind.Player, function (sprite, otherSp
 let padAcceleration = 0
 let padSpeed = 0
 let inDeadTime = false
+let block: Sprite = null
 let locRemainLife = 0
 let Paddle: Sprite = null
-let numberOfBlocks = 0
-let block: Sprite = null
-let lstBlockPosY: number[] = []
-let lstBlockPosX: number[] = []
 let Ball: Sprite = null
 let isBallOnPad = false
+let numberOfBlocks = 0
 info.setLife(3)
 initBoard()
 initBlocks()
