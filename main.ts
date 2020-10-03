@@ -6,41 +6,6 @@ function decreaseBlockLife (blk: Sprite) {
     sprites.changeDataNumberBy(blk, "life", -1)
     return sprites.readDataNumber(blk, "life")
 }
-function initBlocks () {
-    numberOfBlocks = 0
-    createBlockRow(img`
-        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
-        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
-        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
-        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
-        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-        `, 40, 20, 5, 5, 2)
-    createBlockRow(img`
-        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
-        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
-        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
-        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
-        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
-        `, 40, 30, 5, 5, 2)
-    createBlockRow(img`
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        `, 40, 40, 5, 5, 1)
-    createBlockRow(img`
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-        `, 40, 50, 5, 5, 1)
-}
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     if (isBallOnPad) {
         controller.moveSprite(Ball, 0, 0)
@@ -53,7 +18,14 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
 })
 sprites.onDestroyed(SpriteKind.Blocks, function (sprite) {
     numberOfBlocks += -1
-    if (numberOfBlocks <= 0) {
+    if (numberOfBlocks <= 0 && currentStage == 1) {
+        game.splash("Stage 1 Completed", "Press A to proceed")
+        currentStage = 2
+        initBlockStg2()
+        Paddle.destroy()
+        Ball.destroy()
+        initBoard()
+    } else if (numberOfBlocks <= 0 && currentStage == 2) {
         game.over(true)
     }
 })
@@ -92,30 +64,18 @@ function createBlockRow (blkImage: Image, startX: number, startY: number, num: n
     }
     numberOfBlocks += num
 }
-function checkBallReachBottom () {
-    if (Ball.y > 115 && !(inDeadTime)) {
-        inDeadTime = true
-        Paddle.destroy(effects.disintegrate, 500)
-        Ball.destroy()
-        info.changeLifeBy(-1)
-        info.startCountdown(1)
-    }
+function initTestStg1 () {
+    numberOfBlocks = 0
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 75, 40, 1, 5, 1)
 }
-function bounceTheBall (ball: Sprite, obj: Sprite) {
-    if (ball.top < obj.top && ball.right > obj.left) {
-        ball.vy = 0 - Math.abs(ball.vy)
-    } else if (ball.bottom > obj.bottom && ball.left < obj.right) {
-        ball.vy = Math.abs(ball.vy)
-    } else if (ball.left < obj.left && ball.bottom > obj.top) {
-        ball.vx = 0 - Math.abs(ball.vx)
-    } else if (ball.right > obj.right && ball.top < obj.bottom) {
-        ball.vx = Math.abs(ball.vx)
-    } else {
-        game.splash("error 1")
-    }
-}
-function initBoard () {
-    initPaddle()
+function initBall () {
     Ball = sprites.create(img`
         . . 1 1 . . 
         . 1 1 1 1 . 
@@ -133,6 +93,214 @@ function initBoard () {
     isBallOnPad = true
     inDeadTime = false
 }
+function checkBallReachBottom () {
+    if (Ball.y > 115 && !(inDeadTime)) {
+        inDeadTime = true
+        Paddle.destroy(effects.disintegrate, 500)
+        Ball.destroy()
+        info.changeLifeBy(-1)
+        info.startCountdown(1)
+    }
+}
+function initBlockStg1 () {
+    numberOfBlocks = 0
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 40, 20, 5, 5, 2)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 40, 30, 5, 5, 2)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 40, 40, 5, 5, 1)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 40, 50, 5, 5, 1)
+}
+function initBlockStg2 () {
+    numberOfBlocks = 0
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 15, 15, 2, 2, 2)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 15, 22, 2, 2, 2)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 15, 29, 2, 2, 2)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 15, 36, 2, 2, 1)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 15, 43, 2, 2, 1)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 15, 50, 2, 2, 1)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 72, 15, 2, 2, 2)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 72, 22, 2, 2, 2)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 72, 29, 2, 2, 2)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 72, 36, 2, 2, 1)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 72, 43, 2, 2, 1)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 72, 50, 2, 2, 1)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 128, 15, 2, 2, 2)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 128, 22, 2, 2, 2)
+    createBlockRow(img`
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 5 5 5 5 5 5 5 5 5 5 5 5 5 5 2 
+        2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 
+        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+        `, 128, 29, 2, 2, 2)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 128, 36, 2, 2, 1)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 128, 43, 2, 2, 1)
+    createBlockRow(img`
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        `, 128, 50, 2, 2, 1)
+}
+function bounceTheBall (ball: Sprite, obj: Sprite) {
+    if (ball.top < obj.top && ball.right > obj.left) {
+        ball.vy = 0 - Math.abs(ball.vy)
+    } else if (ball.bottom > obj.bottom && ball.left < obj.right) {
+        ball.vy = Math.abs(ball.vy)
+    } else if (ball.left < obj.left && ball.bottom > obj.top) {
+        ball.vx = 0 - Math.abs(ball.vx)
+    } else if (ball.right > obj.right && ball.top < obj.bottom) {
+        ball.vx = Math.abs(ball.vx)
+    } else {
+        game.splash("error 1")
+    }
+}
+function initBoard () {
+    initPaddle()
+    initBall()
+}
 info.onLifeZero(function () {
     game.over(false, effects.dissolve)
 })
@@ -144,18 +312,20 @@ sprites.onOverlap(SpriteKind.Balls, SpriteKind.Player, function (sprite, otherSp
         sprite.vx += randint(0, 20)
     }
 })
+let inDeadTime = false
 let padAcceleration = 0
 let padSpeed = 0
-let inDeadTime = false
 let block: Sprite = null
 let locRemainLife = 0
 let Paddle: Sprite = null
+let numberOfBlocks = 0
 let Ball: Sprite = null
 let isBallOnPad = false
-let numberOfBlocks = 0
+let currentStage = 0
 info.setLife(3)
 initBoard()
-initBlocks()
+initBlockStg1()
+currentStage = 1
 game.onUpdate(function () {
     checkBallReachBottom()
 })
